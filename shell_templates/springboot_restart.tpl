@@ -1,0 +1,1 @@
+java -jar {{ exe_file_path }} --port={{3000 + idx + 1}} --server-port={{9000 + idx + 1}} --name='育成傻逼'
