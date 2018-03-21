@@ -1,10 +1,10 @@
 # My Project-X:  Some useful light weight tools projects
 # Project-X: 一些实用小工具项目
 
-## shell-create.py: 启动脚本生成工具
+## shell-create.py: runnable shell creator
 shell-create.py 根据制定脚本以及可运行文件生成其linux启动脚本的工具
 
-使用方法：
+Usage：
 
 ```shell
 python shell-create method --path= --output= [--shellprefix] [--shellsuffix] [--prefixpath=] [--splitor=] [--pattern=] [--suffix=] --template=
@@ -24,7 +24,24 @@ python shell-create method --path= --output= [--shellprefix] [--shellsuffix] [--
 ```
 
 
-例子：
+Example：
 ```shell
 python shell-create.py springboot --path=C:\projects --template=C:\files\project\python\project-x\shell_templates\springboot_restart.tpl --pattern=*.jar --prefixpath=/tpsys/applications/projects --output=C:\files\shells
 ```
+
+
+
+# Copyright and License
+This module is licensed under the BSD license.
+
+Copyright (C) 2018 by Akers Liang akersliang@gmail.com/akersliang@foxmail.com
+
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+
+Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+
+Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
