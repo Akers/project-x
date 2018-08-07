@@ -19,14 +19,15 @@ class MainEntry(object):
         super(MainEntry, self).__init__()
         self.generator = ShellFileGenerator()
 
-    def springboot(self, path, template, output, shellprefix='restart_', shellsuffix='.sh', prefixpath=None, splitor='/', pattern=None, regx=None):
+    def springboot(self, path, template, output, shellprefix='restart_', shellsuffix='.sh', prefixpath=None, splitor='/', pattern=None, regx=None, regrouping=None):
         """生成SpringBoot启动脚本"""
         self.generator.path = path
         self.generator.templatePath = template.strip()
         self.generator.shellSuffix = shellsuffix
         self.generator.shellPrefix = shellprefix
         self.generator.output = output
-        return self.generator.springboot(prefixpath, splitor, pattern, regx)
+        self.generator.regrouping = regrouping
+        return self.generator.springboot(prefixpath, splitor, pattern, regx, regrouping)
 
     def allshell(self, path):
         """生成全部运行脚本"""
@@ -49,6 +50,7 @@ class MainEntry(object):
                 --prefixpath 可执行文件的前缀路径
                 --splitor 文件路径分隔符，可选，默认转换为linux使用的"/"
                 --pattern 使用通配符过滤文件名，如*.jar
+                --regrouping 重新分组的文件，如jar名字中包含给定的关键字，则生成的脚本输出到regrouping目录中
                 --regx 可运行文件过滤表达式，如提供此参数则只会扫描满足该正则表达式的文件
                 --template 指定生成脚本时使用的模板文件，模板文件语法详见（http://jinja.pocoo.org/docs/2.10/templates/）
         """
@@ -63,13 +65,12 @@ class ShellFileGenerator(object):
         self.path = path
         self.templatePath = templatePath
 
-    def springboot(self, prefixpath=None, splitor='/', pattern=None, regx=None):
+    def springboot(self, prefixpath=None, splitor='/', pattern=None, regx=None, regrouping=None):
         filePaths = read_file_list(
             self.path, prefixpath, splitor, pattern, regx)
         datas = generate_springboot_shells(
             filePaths, self.templatePath, prefixpath,
-            self.shellPrefix, self.shellSuffix)
-        print(datas)
+            self.shellPrefix, self.shellSuffix, regrouping)
         generate_shell_file(datas, self.output)
 
 
@@ -86,7 +87,7 @@ def render_template(templatePath, params):
     return template.render(params)
 
 
-def generate_springboot_shells(runnableJarPaths, template, prefixpath=None, shellPrefix='restart_', shellSuffix='.sh'):
+def generate_springboot_shells(runnableJarPaths, template, prefixpath=None, shellPrefix='restart_', shellSuffix='.sh', regrouping=None):
     """创建springboot脚本数据
     Args:
         runnableJarPaths: 可执行文件路径列表
@@ -108,15 +109,24 @@ def generate_springboot_shells(runnableJarPaths, template, prefixpath=None, shel
         tplParams['exe_file_path'] = p
         tplParams['idx'] = idx
         filename = p
+        if prefixpath:
+            filename = filename.replace(prefixpath, '')
+        if filename.startswith('/'):
+            filename = filename[1:]
         # 如果文件名是cart-service-1.0.jar格式的话，只取前面的cart-service
         if re.match('.*?-\d+\.*', filename):
             filename = filename[0:filename.rindex('-')]
 
-        k = filename.rfind("/")
-        filename = filename[:k] + '/' + shellPrefix + filename[k + 1:]
-        if prefixpath:
-            filename = filename.replace(prefixpath, '')
+        tplParams['server_name'] = filename[filename.rfind("/") + 1:]
 
+        if regrouping and regrouping in filename:
+            print("regrouping filename: ", filename)
+            filename = '%s/%s%s'%(regrouping,shellPrefix,filename[filename.rfind("/") + 1:])
+        else:
+            filename = filename[:filename.rfind("/")] + '/' + shellPrefix + filename[filename.rfind("/") + 1:]
+
+        tplParams['base_path'] = filename[0:filename.find('/')]
+        
         outputFiles.append(
             {
                 'filename': (filename.replace('.', '').replace('-', '_') + shellSuffix).lower(),
@@ -140,12 +150,13 @@ def generate_shell_file(shellDatas, output, splitor='/'):
         if not d['filename'].startswith('/'):
             d['filename'] = '/' + d['filename']
         filePath = output + d['filename']
-        if not os.path.exists(filePath):
-            os.makedirs(filePath[:filePath.rfind(splitor)])
+        if not os.path.exists(filePath[:filePath.rfind('/')]):
+            os.makedirs(filePath[:filePath.rfind('/')])
 
-        with open(filePath, 'wt', encoding='utf8') as f:
-            f.write(d['content'])
-            print('已生成脚本:{}'.format(f))
+        # with open(filePath, 'wt', encoding='utf8') as f:
+        with open(filePath, 'wb+') as f:
+            f.write(bytes(d['content'], "utf8"))
+            print('已生成脚本:{}'.format(filePath))
 
 
 def generate_all_sh(rootPath, shellPattern='*.sh', shellName='all.sh'):
@@ -169,7 +180,7 @@ def read_file_list(path, prefixpath=None, splitor='/', pattern=None, regx=None):
         # print('{0},{1},{2}'.format(dirpath,dirname,filename))
         for i in filename:
             if (not pattern or fnmatch(i, pattern)) and (not regx or re.match(regx, i)):
-                dirpath = prefixpath + dirpath.replace(path, '')
+                dirpath = (prefixpath if prefixpath else "") + dirpath.replace(path, '')
                 dirlist.append(os.path.join(dirpath, i).replace('\\', splitor))
 
     print("已获取所有文件")
